@@ -6,6 +6,7 @@ import {Database, initPool} from "./db";
 import {AuthDao} from "./dao";
 import {AuthHandlers} from "./handlers/auth.handlers";
 import { ServiceHandlers } from "./handlers/service.handlers";
+import { MetricHandlers } from "./handlers/metrics.handlers";
 
 /**
  * Application initialises the API service and all of its dependencies
@@ -27,11 +28,13 @@ export class Application {
       db,
       authDao
     });
+    const metricHandlers = new MetricHandlers();
 
     this.handlers = [];
     // Controller initialisation
-    this.handlers.push(serviceHandlers)
+    this.handlers.push(serviceHandlers);
     this.handlers.push(authHandlers);
+    this.handlers.push(metricHandlers);
   }
 
   /**
@@ -62,6 +65,9 @@ export class Application {
                 prettyPrint: process.env.NODE_ENV !== 'production',
                 redact: ['req.headers.authorization']
               }
+            },
+            {
+              plugin: require('@hapi/h2o2')
             }
           ]
         }
