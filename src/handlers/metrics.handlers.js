@@ -13,7 +13,7 @@ export class MetricHandlers {
     this.metricsDao = metricsDao;
 
     this.routes = this.routes.bind(this);
-    this.inputData = this.inputData.bind(this);
+    this.testData = this.testData.bind(this);
   }
 
   routes(svc) {
@@ -36,23 +36,21 @@ export class MetricHandlers {
 
     svc.route({
       method: "*",
-      path: "/metrics/input",
-      handler: this.inputData,
+      path: "/metrics/test",
+      handler: this.testData,
       options: {
         auth: false
       }
     })
   }
 
-  async inputData(req, h) {
-    let data;
+  async testData(req, h) {
     try {
-      req.data = await this.metricsDao.viewDummyData();
+      req = await this.metricsDao.insertIntoDB();
     } catch (err) {
       console.log(err);
       throw err;
     }
-    console.log(req.data);
-    return req.data;
+    return req;
   }
 }
