@@ -1,2 +1,2 @@
-web: npm run complile
-web: npm run start
+web: ./bin/www npm run complile
+web: ./bin/www npm run start
