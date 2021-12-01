@@ -17,22 +17,22 @@ export class MetricHandlers {
   }
 
   routes(svc) {
-    svc.route({
-      method: "*",
-      path: "/{p*}",
-      handler: {
-        proxy: {
-          mapUri: (req) => {
-            return {
-              uri: `http://localhost:4000/${req.params.p}?${qs.stringify(req.query)}`
-            };
-          },
-        }
-      },
-      options: {
-        auth: false
-      }
-    });
+    // svc.route({
+    //   method: "*",
+    //   path: "/{p*}",
+    //   handler: {
+    //     proxy: {
+    //       mapUri: (req) => {
+    //         return {
+    //           uri: `http://localhost:4000/${req.params.p}?${qs.stringify(req.query)}`
+    //         };
+    //       },
+    //     }
+    //   },
+    //   options: {
+    //     auth: false
+    //   }
+    // });
 
     svc.route({
       method: "*",
