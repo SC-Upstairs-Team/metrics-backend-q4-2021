@@ -19,5 +19,8 @@ module.exports = {
     audience: 'JWT_AUDIENCE',
     subject: 'JWT_SUBJECT',
     issuer: 'JWT_ISSUER'
+  },
+  data: {
+    url: "DATA_URL"
   }
 };

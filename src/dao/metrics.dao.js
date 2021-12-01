@@ -1,6 +1,7 @@
 import { ensureConn } from "./common";
 import axios from "axios";
-axios.defaults.baseURL = "https://sc-upstairs-data-generator.herokuapp.com" || "http://localhost:4000";
+import config from "config";
+axios.defaults.baseURL = config.get("data.url") || "http://localhost:4000";
 
 export class MetricsDao {
 

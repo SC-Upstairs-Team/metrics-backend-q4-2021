@@ -19,5 +19,8 @@ module.exports = {
     audience: 'metrics-backend',
     subject: 'metrics-backend',
     issuer: 'metrics-backend'
+  },
+  data: {
+    url: "https://sc-upstairs-data-generator.herokuapp.com/"
   }
 };
