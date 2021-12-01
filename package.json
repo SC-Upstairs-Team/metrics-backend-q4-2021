@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "build": "npm run compile",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production node /app/dist/index.js",
     "start-windows": "cross-env NODE_ENV=production node dist/index.js",
     "start:dev": "NODE_ENV=development node dist/index.js",
     "start-windows:dev": "cross-env NODE_ENV=development node dist/index.js",
