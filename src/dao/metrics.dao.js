@@ -99,7 +99,7 @@ export class MetricsDao {
   //   const conn = ensureConn(this.database, opts);
   //   const { rows } = await conn.query(`
   //     INSERT INTO metrics_data(pod_id, service_type, ts, http_status, avg_latency, percentile_99, min_latency, max_latency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-  //     ["users-ed01a939", "users", 10000, { 200: 56, 401: 2, 403: 7, 404: 5, 499: 1 }, 250, 200, 100, 300]);
+  //     ["users-ed01a459", "users", 20000, { 200: 56, 401: 6, 403: 6, 404: 6, 499: 3 }, 200, 150, 50, 250]);
   //   if (rows.length === 0) {
   //     return;
   //   }
@@ -113,6 +113,6 @@ export class MetricsDao {
   //     SELECT * 
   //     FROM metrics_data
   //     `);
-  //   return rows[0];
+  //   return rows;
   // }
 }

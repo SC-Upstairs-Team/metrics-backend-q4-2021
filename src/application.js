@@ -54,7 +54,8 @@ export class Application {
               }
             },
             cors: {
-              origin: [process.env.NODE_ENV === 'production' ? 'https://sc-upstairs-metrics-frontend.herokuapp.com/' : 'http://localhost:3000']
+              origin: ['*'],
+              additionalHeaders: ['cache-control', 'x-requested-with']
             }
           }
         },
