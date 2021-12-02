@@ -54,8 +54,7 @@ export class Application {
               }
             },
             cors: {
-              origin: ['*'],
-              additionalHeaders: ['cache-control', 'x-requested-with']
+              origin: ['*']
             }
           }
         },
