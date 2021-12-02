@@ -1,7 +1,7 @@
 import { ensureConn } from "./common";
 import axios from "axios";
 import config from "config";
-axios.defaults.baseURL = config.get("data.url") || "http://localhost:4000";
+axios.defaults.baseURL = "http://localhost:4000" || config.get("data.url");
 
 export class MetricsDao {
 
