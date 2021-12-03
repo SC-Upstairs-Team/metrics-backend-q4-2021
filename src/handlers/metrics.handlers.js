@@ -13,40 +13,46 @@ export class MetricHandlers {
     this.metricsDao = metricsDao;
 
     this.routes = this.routes.bind(this);
-    this.testData = this.testData.bind(this);
+    this.initialiseData = this.initialiseData.bind(this);
+    this.viewAllData = this.viewAllData.bind(this);
+    this.deleteRows = this.deleteRows.bind(this);
   }
 
   routes(svc) {
-    svc.route({
-      method: "*",
-      path: "/{p*}",
-      handler: {
-        proxy: {
-          mapUri: (req) => {
-            return {
-              uri: `http://localhost:4000/${req.params.p}?${qs.stringify(req.query)}`
-            };
-          },
-        }
-      },
-      options: {
-        auth: false
-      }
-    });
 
     svc.route({
       method: "*",
       path: "/metrics/test",
-      handler: this.testData,
+      handler: this.viewAllData,
       options: {
         auth: false
       }
     })
   }
 
-  async testData(req, h) {
+  async initialiseData(req, h) {
     try {
-      req = await this.metricsDao.insertIntoDB();
+      req = await this.metricsDao.initialiseData(0, 2592000);
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+    return req;
+  }
+
+  async viewAllData(req, h) {
+    try {
+      req = await this.metricsDao.viewData();
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+    return req;
+  }
+
+  async deleteRows(req, h) {
+    try {
+      req = await this.metricsDao.deleteTableRows("metrics_data");
     } catch (err) {
       console.log(err);
       throw err;
