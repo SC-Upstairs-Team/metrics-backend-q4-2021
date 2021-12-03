@@ -23,7 +23,7 @@ export class MetricHandlers {
     svc.route({
       method: "*",
       path: "/metrics/test",
-      handler: this.viewAllData,
+      handler: this.initialiseData,
       options: {
         auth: false
       }

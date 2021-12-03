@@ -26,8 +26,9 @@ export class MetricsDao {
     const conn = ensureConn(this.database, opts);
     for (let [ts, tsObject] of Object.entries(rawData)) {
       for (let [pod, podObject] of Object.entries(tsObject)) {
+        
+        // Get latency array from pod object and sort to find min, max, and 99th percentile
         const latencyArray = podObject.http.latency
-
         latencyArray.sort(function (a, b) { return a - b })
 
         let sum = 0;
@@ -48,6 +49,8 @@ export class MetricsDao {
             return Math.round(array[b]);
           };
         })(latencyArray);
+
+        // Run query to insert each pod objects "converted data" into the database
         const rows = conn.query(`
           INSERT INTO metrics_data(
             pod_id, 
@@ -60,13 +63,15 @@ export class MetricsDao {
             max_latency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
           [podObject.meta.pod, podObject.meta.service, podObject.ts, podObject.http.status, avg, percentile99, min, max]);
         console.log("INSERT SUCCESSFUL! " + podObject.ts)
+        
+        // If there are no rows return the function
+        // TODO: Possibly add error checking here with a try/catch??
         if (rows.length === 0) {
           return;
         }
       }
     }
     console.log("IM AT THE FINISH");
-    return 1;
   }
 
   async initialiseData(tsStart, tsEnd, opts) {
