@@ -14,18 +14,22 @@ export class MetricsDao {
     this.deleteDatabaseRows = this.deleteTableRows.bind(this);
   }
 
-  // Creates path based on paramters, will get the data from the path and return as a promise object
+  // Creates path based on paramters, will get the data from the path
   async getFromDataGen({ serviceType, tsStart, tsEnd }) {
     const path = `/metrics/${serviceType}?from=${tsStart}&to=${tsEnd}`;
-    const rawData = await axios.get(path);
-    return rawData;
+    const { data: response } = await axios.get(path);
+    return response;
   }
 
   // Converts/gathers all approriate data from the original JSON object to insert into the database
-  insertIntoDB(rawData, opts) {
+  async insertIntoDB(rawData, opts) {
     const conn = ensureConn(this.database, opts);
-    for (let [ts, tsObject] of Object.entries(rawData)) {
-      for (let [pod, podObject] of Object.entries(tsObject)) {
+    const results = [];
+
+    for (ts in rawData) {
+      const tsObject = rawData[ts];
+      for (pod in tsObject) {
+        const podObject = tsObject[pod];
         
         // Get latency array from pod object and sort to find min, max, and 99th percentile
         const latencyArray = podObject.http.latency
@@ -51,39 +55,36 @@ export class MetricsDao {
         })(latencyArray);
 
         // Run query to insert each pod objects "converted data" into the database
-        const rows = conn.query(`
+        const { rows }  = await conn.query(`
           INSERT INTO metrics_data(
             pod_id, 
             service_type, 
             ts, 
-            http_status, 
             avg_latency, 
             percentile_99, 
             min_latency, 
-            max_latency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-          [podObject.meta.pod, podObject.meta.service, podObject.ts, podObject.http.status, avg, percentile99, min, max]);
+            max_latency) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+          [podObject.meta.pod, podObject.meta.service, podObject.ts, avg, percentile99, min, max]);
         console.log("INSERT SUCCESSFUL! " + podObject.ts)
         
-        // If there are no rows return the function
-        // TODO: Possibly add error checking here with a try/catch??
+        // If there are no rows return an empty array
         if (rows.length === 0) {
-          return;
+          return [];
         }
+        results.push(...rows);
       }
     }
-    console.log("IM AT THE FINISH");
+    return results;
   }
 
   async initialiseData(tsStart, tsEnd, opts) {
-    const conn = ensureConn(this.database, opts);
-
-    const { data } = await this.getFromDataGen({
+    const data = await this.getFromDataGen({
       serviceType: "cart",
       tsStart: tsStart,
       tsEnd: tsEnd
     });
 
-    this.insertIntoDB(data, opts);
+    await this.insertIntoDB(data, opts);
     return data;
   }
 
