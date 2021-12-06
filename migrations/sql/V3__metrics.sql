@@ -6,13 +6,13 @@ CREATE TABLE metrics_data (
   percentile_99 INT NOT NULL,
   min_latency INT NOT NULL,
   max_latency INT NOT NULL,
-  status_200 INT NOT NULL,
-  status_400 INT NOT NULL,
-  status_401 INT NOT NULL,
-  status_403 INT NOT NULL,
-  status_404 INT NOT NULL,
-  status_499 INT NOT NULL,
-  status_500 INT NOT NULL,
-  status_502 INT NOT NULL
+  status_200 INT,
+  status_400 INT,
+  status_401 INT,
+  status_403 INT,
+  status_404 INT,
+  status_499 INT,
+  status_500 INT,
+  status_502 INT,
   PRIMARY KEY (pod_id, ts, service_type)
 );

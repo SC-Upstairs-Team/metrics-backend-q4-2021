@@ -1,6 +1,7 @@
 import { ensureConn } from "./common";
 import axios from "axios";
 import config from "config";
+import { statSync } from "fs";
 axios.defaults.baseURL = "http://localhost:4000" || config.get("data.url");
 
 export class MetricsDao {
@@ -26,11 +27,11 @@ export class MetricsDao {
     const conn = ensureConn(this.database, opts);
     const results = [];
 
-    for (ts in rawData) {
+    for (var ts in rawData) {
       const tsObject = rawData[ts];
-      for (pod in tsObject) {
+      for (var pod in tsObject) {
         const podObject = tsObject[pod];
-        
+
         // Get latency array from pod object and sort to find min, max, and 99th percentile
         const latencyArray = podObject.http.latency
         latencyArray.sort(function (a, b) { return a - b })
@@ -54,6 +55,39 @@ export class MetricsDao {
           };
         })(latencyArray);
 
+        const statusArray = podObject.http.status
+        var stat_200, stat_400, stat_401, stat_403, stat_404, stat_499, stat_500, stat_502;
+        stat_200 = stat_400 = stat_401 = stat_403 = stat_404 = stat_499 = stat_500 = stat_502 = 0;
+
+        for (var [key, value] of Object.entries(statusArray)) {
+          switch (key) {
+            case '200':
+              stat_200 = value;
+              break;
+            case '400':
+              stat_400 = value;
+              break;
+            case '401':
+              stat_401 = value;
+              break;
+            case '403':
+              stat_403 = value;
+              break;
+            case '404':
+              stat_404 = value;
+              break;
+            case '499':
+              stat_499 = value;
+              break;
+            case '500':
+              stat_500 = value;
+              break;
+            case '502':
+              stat_502 = value;
+              break;
+          }
+          
+        }
         // Run query to insert each pod objects "converted data" into the database
         const { rows }  = await conn.query(`
           INSERT INTO metrics_data(
@@ -63,10 +97,19 @@ export class MetricsDao {
             avg_latency, 
             percentile_99, 
             min_latency, 
-            max_latency) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-          [podObject.meta.pod, podObject.meta.service, podObject.ts, avg, percentile99, min, max]);
+            max_latency,
+            status_200,
+            status_400,
+            status_401,
+            status_403,
+            status_404,
+            status_499,
+            status_500,
+            status_502) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+          [podObject.meta.pod, podObject.meta.service, podObject.ts, avg, percentile99, min, max, stat_200, stat_400, stat_401, stat_403, stat_404, stat_499, stat_500, stat_502]);
+        console.log(podObject.meta.pod, podObject.meta.service, podObject.ts, avg, percentile99, min, max);
         console.log("INSERT SUCCESSFUL! " + podObject.ts)
-        
+
         // If there are no rows return an empty array
         if (rows.length === 0) {
           return [];
@@ -109,7 +152,15 @@ export class MetricsDao {
         ROUND(AVG(avg_latency)) as avg_lat, 
         ROUND(AVG(percentile_99)) as avg_per99,
         ROUND(AVG(min_latency)) as avg_min,
-        ROUND(AVG(max_latency)) as avg_max
+        ROUND(AVG(max_latency)) as avg_max,
+        SUM(status_200) as status_200,
+        SUM(status_400) as status_400,
+        SUM(status_401) as status_401,
+        SUM(status_403) as status_403,
+        SUM(status_404) as status_404,
+        SUM(status_499) as status_499,
+        SUM(status_500) as status_500,
+        SUM(status_502) as status_502
       FROM metrics_data
       GROUP BY ts, service_type
       ORDER BY ts
