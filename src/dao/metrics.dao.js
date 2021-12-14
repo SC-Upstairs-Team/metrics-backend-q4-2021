@@ -162,7 +162,6 @@ export class MetricsDao {
         ROUND(AVG(avg_latency)) as avg_lat, 
         ROUND(AVG(percentile_99)) as avg_per99,
         ROUND(AVG(min_latency)) as avg_min,
-        ROUND(AVG(max_latency)) as avg_max,
         SUM(status_200) as status_200,
         SUM(status_400) as status_400,
         SUM(status_401) as status_401,
@@ -191,24 +190,38 @@ export class MetricsDao {
   async queryDatabase(tsStart, tsEnd, service, windowFactor, opts) {
     const conn = ensureConn(this.database, opts);
     const { rows } = await conn.query(`
+    SELECT 
+      min(ts) as ts_point, 
+      ROUND(AVG(average_latency)) AS avg_lat,
+      MAX(average_per99) AS avg_per99,
+      MIN(minimum_lat) AS min_lat,
+      SUM(stat_200) as status_200,
+      SUM(stat_400) as status_400,
+      SUM(stat_401) as status_401,
+      SUM(stat_403) as status_403,
+      SUM(stat_404) as status_404,
+      SUM(stat_499) as status_499,
+      SUM(stat_500) as status_500,
+      SUM(stat_502) as status_502
+    FROM (
       SELECT 
-        min(ts) as ts_point, 
-        ROUND(AVG(average_latency)) AS avg_lat,
-        MAX(average_per99) AS avg_per99,
-        MIN(minimum_lat) AS min_lat,
-        MAX(maximum_lat) AS max_lat
-      FROM (
-        SELECT 
-          ts,
-          AVG(avg_latency) as average_latency,
-          MAX(percentile_99) as average_per99,
-          MIN(min_latency) as minimum_lat,
-          MAX(max_latency) as maximum_lat,
-          ROW_NUMBER() OVER (ORDER BY ts) AS n
-        FROM metrics_data
+        ts,
+        AVG(avg_latency) as average_latency,
+        MAX(percentile_99) as average_per99,
+        MIN(min_latency) as minimum_lat,
+        SUM(status_200) as stat_200,
+        SUM(status_400) as stat_400,
+        SUM(status_401) as stat_401,
+        SUM(status_403) as stat_403,
+        SUM(status_404) as stat_404,
+        SUM(status_499) as stat_499,
+        SUM(status_500) as stat_500,
+        SUM(status_502) as stat_502,
+        ROW_NUMBER() OVER (ORDER BY ts) AS n
+      FROM metrics_data
         WHERE (ts BETWEEN ${tsStart} AND ${tsEnd}) AND service_type = '${service}'
         GROUP BY ts
-      ) x(ts, average_latency, average_per99, minimum_lat, maximum_lat, n)
+      ) x(ts, average_latency, average_per99, minimum_lat, stat_200, stat_400, stat_401, stat_403, stat_404, stat_499, stat_500, stat_502, n)
       GROUP BY n/${windowFactor}
       ORDER BY n/${windowFactor}
         ;`);
