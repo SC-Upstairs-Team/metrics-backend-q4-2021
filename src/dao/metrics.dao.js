@@ -219,12 +219,12 @@ export class MetricsDao {
         SUM(status_502) as stat_502,
         ROW_NUMBER() OVER (ORDER BY ts) AS n
       FROM metrics_data
-        WHERE (ts BETWEEN ${tsStart} AND ${tsEnd}) AND service_type = '${service}'
+        WHERE (ts BETWEEN $1 AND $2) AND service_type = $3
         GROUP BY ts
       ) x(ts, average_latency, average_per99, minimum_lat, stat_200, stat_400, stat_401, stat_403, stat_404, stat_499, stat_500, stat_502, n)
-      GROUP BY n/${windowFactor}
-      ORDER BY n/${windowFactor}
-        ;`);
+      GROUP BY n/$4
+      ORDER BY n/$4
+        ;`, [tsStart, tsEnd, service, windowFactor]);
     console.log(`!!! QUERY DATA for ${service} between ${tsStart} and ${tsEnd} !!!`);
     return rows;
   }
