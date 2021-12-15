@@ -12,6 +12,7 @@ export class MetricsDao {
     this.initialiseDatabase = this.initialiseDatabase.bind(this);
     this.getAllDatabaseData = this.getAllDatabaseData.bind(this);
     this.deleteTableRows = this.deleteTableRows.bind(this);
+    this.getMinDBTime = this.getMinDBTime.bind(this);
   }
 
   // Creates path based on paramters, will get the data from the path
@@ -178,12 +179,21 @@ export class MetricsDao {
     return rows;
   }
 
+  async getMinDBTime (opts) {
+    const conn = ensureConn(this.database, opts);
+    const { rows } = await conn.query(`
+    SELECT 
+      MIN(ts) as min_time_stamp
+    FROM metrics_data`);
+    return rows
+  }
+
   /**
    * Query the database for a specifc time frame for a specific service
    * @param tsStart {int} 
    * @param tsEnd {int} 
    * @param service {string} the service type that is selected
-   * @param windowFactor {int} factor of 6 to consense the number of rows to 61
+   * @param windowFactor {int} factor of 6 to condense the number of rows to 61
    * @param opts {ServiceCallOpts?} options for this service function call
    * @return {Account} found account
    */
@@ -191,7 +201,7 @@ export class MetricsDao {
     const conn = ensureConn(this.database, opts);
     const { rows } = await conn.query(`
     SELECT 
-      min(ts) as ts_point, 
+      MAX(ts) as ts_point, 
       ROUND(AVG(average_latency)) AS avg_lat,
       MAX(average_per99) AS avg_per99,
       MIN(minimum_lat) AS min_lat,

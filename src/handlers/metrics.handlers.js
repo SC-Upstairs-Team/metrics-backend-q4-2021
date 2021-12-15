@@ -2,6 +2,10 @@
  * Metrics routes and handlers
  */
 
+import { time } from "console";
+import { start } from "repl";
+import { parse } from "uuid";
+
 export class MetricHandlers {
   constructor({
     db,
@@ -65,7 +69,7 @@ export class MetricHandlers {
       try {
         promises.push(
           this.metricsDao.initialiseDatabase(hour * msInHour, (hour + 1) * msInHour)
-          );
+        );
       } catch (err) {
         console.log(err);
         throw err;
@@ -97,12 +101,52 @@ export class MetricHandlers {
   }
 
   async queryDB(req, h) {
-    const service = "cart"
-    const tsStart = 10000 // Add 10 seconds to give a round number of rows (i.e. 360 instead of 361 rows returned)
-    const tsEnd = 3600000
-    const windowFactor = 6
+    console.log(req.query)
+    let { service, sliderValue, timeFrame, tsEnd, tsStart } = req.query
+
+    sliderValue = parseInt(sliderValue)
+    timeFrame = parseInt(timeFrame)
+    const windowFactor = 6 * timeFrame
+
     try {
-      req = await this.metricsDao.queryDatabase(tsStart, tsEnd, service, windowFactor);
+      req = await this.metricsDao.getMinDBTime();
+      console.log(req)
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+    const minTimeStamp = req[0].min_time_stamp
+
+    console.log(minTimeStamp)
+    const timeStamps = (() => {
+      let startingTS = -1
+      let endingTS = -1
+
+      if (timeFrame === 1) {
+        startingTS = minTimeStamp + (sliderValue * 3600000) + 20000
+        endingTS = startingTS + 3600000
+      }
+
+      else if (timeFrame === 6) {
+        startingTS = minTimeStamp + (6 * sliderValue * 3600000) + 20000
+        endingTS = startingTS + (6 * 3600000)
+      }
+
+      else if (timeFrame === 12) {
+        startingTS = minTimeStamp + (12 * sliderValue * 3600000) + 20000
+        endingTS = startingTS + (12 * 3600000)
+      }
+
+      else {
+        startingTS = minTimeStamp
+        endingTS = minTimeStamp + (3600000 * 24)
+      }
+      console.log(startingTS, endingTS)
+      return [startingTS, endingTS]
+    })(minTimeStamp, timeFrame);
+
+    try {
+      req = await this.metricsDao.queryDatabase(timeStamps[0], timeStamps[1], service, windowFactor);
     } catch (err) {
       console.log(err);
       throw err;
