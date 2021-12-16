@@ -32,7 +32,6 @@ export class MetricHandlers {
       }
     })
 
-    // Testing route
     svc.route({
       method: "*",
       path: "/metrics/init",
@@ -61,6 +60,7 @@ export class MetricHandlers {
 
   // Initialise datbase wiith one months worth of data
   async initialiseDB(req, h) {
+    const startTime = 1620100800 * 1000
     const hours = 24;
     const msInHour = 60 * 60 * 1000;
     const promises = [];
@@ -68,7 +68,7 @@ export class MetricHandlers {
     for (let hour = 0; hour < hours; hour++) {
       try {
         promises.push(
-          this.metricsDao.initialiseDatabase(hour * msInHour, (hour + 1) * msInHour)
+          this.metricsDao.initialiseDatabase(startTime + (hour * msInHour), startTime + ((hour + 1) * msInHour))
         );
       } catch (err) {
         console.log(err);
@@ -101,8 +101,7 @@ export class MetricHandlers {
   }
 
   async queryDB(req, h) {
-    console.log(req.query)
-    let { service, sliderValue, timeFrame, tsEnd, tsStart } = req.query
+    let { service, sliderValue, timeFrame } = req.query
 
     sliderValue = parseInt(sliderValue)
     timeFrame = parseInt(timeFrame)
@@ -110,38 +109,29 @@ export class MetricHandlers {
 
     try {
       req = await this.metricsDao.getMinDBTime();
-      console.log(req)
     } catch (err) {
       console.log(err);
       throw err;
     }
     const minTimeStamp = req[0].min_time_stamp
 
-    console.log(minTimeStamp)
     const timeStamps = (() => {
       let startingTS = -1
       let endingTS = -1
 
       if (timeFrame === 1) {
-        startingTS = minTimeStamp + (sliderValue * 3600000) + 20000
-        endingTS = startingTS + 3600000
-      }
-
-      else if (timeFrame === 6) {
-        startingTS = minTimeStamp + (6 * sliderValue * 3600000) + 20000
-        endingTS = startingTS + (6 * 3600000)
-      }
-
-      else if (timeFrame === 12) {
-        startingTS = minTimeStamp + (12 * sliderValue * 3600000) + 20000
-        endingTS = startingTS + (12 * 3600000)
-      }
-
-      else {
+        startingTS = minTimeStamp + (sliderValue * 3600) + 20
+        endingTS = startingTS + 3600
+      } else if (timeFrame === 6) {
+        startingTS = minTimeStamp + (6 * sliderValue * 3600) + 20
+        endingTS = startingTS + (6 * 3600)
+      } else if (timeFrame === 12) {
+        startingTS = minTimeStamp + (12 * sliderValue * 3600) + 20
+        endingTS = startingTS + (12 * 3600)
+      } else {
         startingTS = minTimeStamp
-        endingTS = minTimeStamp + (3600000 * 24)
+        endingTS = minTimeStamp + (3600 * 24)
       }
-      console.log(startingTS, endingTS)
       return [startingTS, endingTS]
     })(minTimeStamp, timeFrame);
 

@@ -99,7 +99,7 @@ export class MetricsDao {
         let tempArray = {
           'pod_id': podObject.meta.pod,
           'service_type': podObject.meta.service,
-          'ts': podObject.ts,
+          'ts': (podObject.ts / 1000),
           'avg_latency': avg,
           'percentile_99': percentile99,
           'min_latency': min,
@@ -139,6 +139,7 @@ export class MetricsDao {
         tsEnd: tsEnd
       });
       await this.insertIntoDB(service_data, opts);
+      console.log("INSERTED INTO DB");
     }
     return all_data;
   }
